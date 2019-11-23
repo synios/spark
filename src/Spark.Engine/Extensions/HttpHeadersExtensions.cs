@@ -59,7 +59,11 @@ namespace Spark.Engine.Extensions
         /// <returns>Returns true if the Content-Type header matches any of the supported Xml or Json MIME types.</returns>
         public static bool IsContentTypeHeaderFhirMediaType(this HttpContent content)
         {
-            string contentType = content.Headers.ContentType?.MediaType;
+            return IsContentTypeHeaderFhirMediaType(content.Headers.ContentType?.MediaType);
+        }
+        public static bool IsContentTypeHeaderFhirMediaType(string contentType)
+        {
+            if (string.IsNullOrEmpty(contentType)) return false;
             return ContentType.XML_CONTENT_HEADERS.Contains(contentType)
                 || ContentType.JSON_CONTENT_HEADERS.Contains(contentType);
         }

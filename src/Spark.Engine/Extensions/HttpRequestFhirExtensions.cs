@@ -16,7 +16,10 @@ using Spark.Engine.Core;
 using Hl7.Fhir.Rest;
 using Hl7.Fhir.Utility;
 using Spark.Formatters;
+using System.Net.Http.Headers;
 #if NETSTANDARD2_0
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
@@ -94,6 +97,13 @@ namespace Spark.Engine.Extensions
         }
 
 #if NETSTANDARD2_0
+
+        internal static string GetRequestUri(this HttpRequest request)
+        {
+            var httpRequestFeature = request.HttpContext.Features.Get<IHttpRequestFeature>();
+            return $"{request.Scheme}://{request.Host}{httpRequestFeature.RawTarget}";
+        }
+
         public static DateTimeOffset? IfModifiedSince(this HttpRequest request)
         {
             request.Headers.TryGetValue("If-Modified-Since", out StringValues values);
@@ -257,7 +267,23 @@ namespace Spark.Engine.Extensions
             return ContentType.XML_CONTENT_HEADERS.Contains(accept)
                 || ContentType.JSON_CONTENT_HEADERS.Contains(accept);
         }
-        
+
+#if NETSTANDARD2_0
+        /// <summary>
+        /// Returns true if the Accept header matches any of the FHIR supported Xml or Json MIME types, otherwise false.
+        /// </summary>
+        public static bool IsAcceptHeaderFhirMediaType(this HttpRequest request)
+        {
+            var acceptHeader = request.GetTypedHeaders().Accept.FirstOrDefault();
+            if (acceptHeader == null || acceptHeader.MediaType == StringSegment.Empty)
+                return false;
+
+            string accept = acceptHeader.MediaType.Value;
+            return ContentType.XML_CONTENT_HEADERS.Contains(accept)
+                || ContentType.JSON_CONTENT_HEADERS.Contains(accept);
+        }
+#endif
+
         public static bool IsRawBinaryRequest(this HttpRequestMessage request, Type type)
         {
             if (type == typeof(Binary) || type == typeof(FhirResponse))
@@ -277,7 +303,43 @@ namespace Spark.Engine.Extensions
                 return false;
         }
 
-        public static bool IsRawBinaryPostOrPutRequest(this HttpRequestMessage request)
+#if NETSTANDARD2_0
+        public static bool IsRawBinaryRequest(this OutputFormatterCanWriteContext context, Type type)
+        {
+            if (type == typeof(Binary) || (type == typeof(FhirResponse)) && ((FhirResponse)context.Object).Resource is Binary)
+            {
+                HttpRequest request = context.HttpContext.Request;
+                bool isFhirMediaType = false;
+                if (request.Method == "GET")
+                    isFhirMediaType = request.IsAcceptHeaderFhirMediaType();
+                else if (request.Method == "POST" || request.Method == "PUT")
+                    isFhirMediaType = HttpRequestExtensions.IsContentTypeHeaderFhirMediaType(request.ContentType);
+
+                var ub = new UriBuilder(request.GetRequestUri());
+                // TODO: KM: Path matching is not optimal should be replaced by a more solid solution.
+                return ub.Path.Contains("Binary")
+                    && !isFhirMediaType;
+            }
+            else
+                return false;
+        }
+
+        public static bool IsRawBinaryRequest(this HttpRequest request)
+        {
+            bool isFhirMediaType = false;
+            if (request.Method == "GET")
+                isFhirMediaType = request.IsAcceptHeaderFhirMediaType();
+            else if (request.Method == "POST" || request.Method == "PUT")
+                isFhirMediaType = HttpRequestExtensions.IsContentTypeHeaderFhirMediaType(request.ContentType);
+
+            var ub = new UriBuilder(request.GetRequestUri());
+            // TODO: KM: Path matching is not optimal should be replaced by a more solid solution.
+            return ub.Path.Contains("Binary")
+                && !isFhirMediaType;
+        }
+#endif
+
+            public static bool IsRawBinaryPostOrPutRequest(this HttpRequestMessage request)
         {
             var ub = new UriBuilder(request.RequestUri);
             // TODO: KM: Path matching is not optimal should be replaced by a more solid solution.
@@ -285,5 +347,16 @@ namespace Spark.Engine.Extensions
                 && !request.Content.IsContentTypeHeaderFhirMediaType()
                 && (request.Method == HttpMethod.Post || request.Method == HttpMethod.Put);
         }
+
+#if NETSTANDARD2_0
+        public static bool IsRawBinaryPostOrPutRequest(this HttpRequest request)
+        {
+            var ub = new UriBuilder(request.GetRequestUri());
+            // TODO: KM: Path matching is not optimal should be replaced by a more solid solution.
+            return ub.Path.Contains("Binary")
+                && !HttpRequestExtensions.IsContentTypeHeaderFhirMediaType(request.ContentType)
+                && (request.Method == "POST" || request.Method == "PUT");
+        }
+#endif
     }
 }
