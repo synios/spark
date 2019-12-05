@@ -79,7 +79,8 @@ namespace Spark.Web
                 }));
 
             // Sets up the MongoDB store
-            services.AddMongoFhirStore(storeSettings);
+            //services.AddMongoFhirStore(storeSettings);
+            services.AddSyniosFhirStore(storeSettings);
 
             // AddFhir also calls AddMvcCore
             services.AddFhir(sparkSettings);
