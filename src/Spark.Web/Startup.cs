@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using Spark.Engine;
 using Spark.Engine.Extensions;
-using Spark.Mongo.Extensions;
+using Spark.Synios.Extensions;
 using Spark.Web.Data;
 using Spark.Web.Models;
 using Spark.Web.Models.Config;
