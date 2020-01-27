@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Telemed\backend\spark\Synios.Spark.Adapter\Synios.Spark.Adapter.csproj" />
+    <ProjectReference Include="../../../telemed/backend/spark/Synios.Spark.Adapter/Synios.Spark.Adapter.csproj" />
     <ProjectReference Include="..\Spark.Engine\Spark.Engine.csproj" />
     <ProjectReference Include="..\Spark.Mongo\Spark.Mongo.csproj" />
   </ItemGroup>
