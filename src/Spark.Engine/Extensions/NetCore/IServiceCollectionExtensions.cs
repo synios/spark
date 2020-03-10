@@ -66,7 +66,7 @@ namespace Spark.Engine.Extensions
             services.TryAddSingleton((provder) => new FhirJsonSerializer(settings.SerializerSettings));
             services.TryAddSingleton((provder) => new FhirXmlSerializer(settings.SerializerSettings));
 
-            services.TryAddSingleton<IFhirService, FhirService>();
+            services.TryAddTransient<IFhirService, FhirService>();
 
             IMvcCoreBuilder builder = services.AddFhirFormatters(setupAction);
 
