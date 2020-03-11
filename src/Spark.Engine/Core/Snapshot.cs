@@ -18,7 +18,7 @@ namespace Spark.Engine.Core
     public class Snapshot
     {
         public const int NOCOUNT = -1;
-        public const int MAX_PAGE_SIZE = 100;
+        public const int MAX_PAGE_SIZE = 1000;
 
 
         public string Id { get; set; }
